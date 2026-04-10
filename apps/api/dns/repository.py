@@ -1,0 +1,9 @@
+from typing import Protocol
+
+from apps.api.dns.models import DnsServerRecord
+
+
+class DnsServerRepository(Protocol):
+    async def find_all(self) -> list[DnsServerRecord]: ...
+    async def save(self, record: DnsServerRecord) -> None: ...
+    async def find_by_id(self, record_id: str) -> DnsServerRecord | None: ...
