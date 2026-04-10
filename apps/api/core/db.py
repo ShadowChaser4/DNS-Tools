@@ -63,7 +63,7 @@ async def close_mongo(app: FastAPI) -> None:
     """Close the shared AsyncMongoClient on shutdown."""
     global _mongo_client
     if _mongo_client is not None:
-        _mongo_client.close()
+        await _mongo_client.close()
         _mongo_client = None
         app.state.mongo_client = None
         app.state.mongo_db = None

@@ -1,5 +1,4 @@
 from beanie import init_beanie
-from fastapi import FastAPI
 from pymongo import AsyncMongoClient
 
 from ..dns.documents import docs as dns_docs
