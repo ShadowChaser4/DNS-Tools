@@ -1,9 +1,13 @@
-from fastapi import FastAPI
+from typing import AsyncGenerator
+
+from fastapi import Depends, FastAPI
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
-from .core import connect_to_mongo, close_mongo, initialize_odm
+from pymongo import AsyncMongoClient
 
+
+from .core import connect_to_mongo, close_mongo, initialize_odm, get_db
 from .dns.router import router as dns_router
 
 
@@ -30,11 +34,23 @@ class RootResponseModel(BaseModel):
     message: str
 
 
-@app.get("/", response_model=RootResponseModel)
+@app.get("/", response_model=RootResponseModel, tags=["Root"])
 async def root() -> RootResponseModel:
     return RootResponseModel(
         message="Welcome to the DNS Tools API! Use the /dns endpoint to perform DNS lookups."
     )
+
+
+@app.get("/health", response_model=RootResponseModel, tags=["Health"])
+async def health(
+    db: AsyncGenerator[AsyncMongoClient | None] = Depends(get_db),
+) -> RootResponseModel:
+    try:
+        await db.command("ping")  # Check MongoDB connection
+        return RootResponseModel(message="API is running smoothly.")
+    except Exception as e:
+        print(f"Health check failed: {e}", e)
+        return RootResponseModel(message=f"API is not running smoothly")
 
 
 app.include_router(dns_router)
