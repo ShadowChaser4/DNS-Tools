@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from .schemas import DnsLookupResponse
+from .schemas import DnsLookupResponse, DnsLookupType
 from .services import DnsResolverService
 
 router = APIRouter(prefix="/dns", tags=["DNS"])
@@ -17,12 +17,13 @@ def get_dns_service() -> "DnsResolverService":
 async def dns_lookup(
     domain: str,
     service: DnsResolverService = Depends(get_dns_service),
+    type: DnsLookupType = DnsLookupType.A,
 ) -> DnsLookupResponse:
     """
     Perform a DNS lookup for a given domain.
     """
     # Placeholder for DNS lookup logic
-    records = await service.resolve_dns_record(domain, "A")
+    records = await service.resolve_dns_record(domain, type.value)
     return DnsLookupResponse(records=records)
 
 

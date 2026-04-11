@@ -67,7 +67,9 @@ class DnsResolverService:
             results.append(
                 SingleDnsLookupResponse(
                     dns_resolver_name=dns_server.name,
-                    dns_resolver_ip=dns_server.ips[0] if dns_server.ips else "N/A",
+                    dns_resolver_ip=(
+                        ", ".join(dns_server.ips) if dns_server.ips else "N/A"
+                    ),
                     domain=domain,
                     record_type=record_type,
                     records=records,

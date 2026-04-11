@@ -1,4 +1,15 @@
+from enum import Enum
+
 from pydantic import BaseModel
+
+
+class DnsLookupType(str, Enum):
+    A = "A"
+    AAAA = "AAAA"
+    CNAME = "CNAME"
+    MX = "MX"
+    NS = "NS"
+    TXT = "TXT"
 
 
 class SingleDnsLookupResponse(BaseModel):
