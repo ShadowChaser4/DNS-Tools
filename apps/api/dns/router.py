@@ -1,28 +1,30 @@
 from fastapi import APIRouter, Depends
 
-from ..core.db import get_db
-from .schemas import DnsLookupResponse
-
+from .schemas import DnsLookupResponse, DnsLookupType
+from .services import DnsResolverService
 
 router = APIRouter(prefix="/dns", tags=["DNS"])
 
 
-def get_dns_service(db=Depends(get_db)):
-    from .services import DnsResolverService
+def get_dns_service() -> "DnsResolverService":
+    from .repository import DnsServerRepository
+    from .models import DnsServerRecord
 
-    return DnsResolverService(db)
+    return DnsResolverService(DnsServerRepository(DnsServerRecord))
 
 
 @router.get("/lookup/{domain}", response_model=DnsLookupResponse)
 async def dns_lookup(
     domain: str,
-    service=Depends(get_dns_service),
+    service: DnsResolverService = Depends(get_dns_service),
+    type: DnsLookupType = DnsLookupType.A,
 ) -> DnsLookupResponse:
     """
     Perform a DNS lookup for a given domain.
     """
     # Placeholder for DNS lookup logic
-    return DnsLookupResponse(records=[])
+    records = await service.resolve_dns_record(domain, type.value)
+    return DnsLookupResponse(records=records)
 
 
 __all__ = ["router"]

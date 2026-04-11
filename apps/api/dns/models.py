@@ -4,7 +4,7 @@ from beanie import Document
 from pydantic import Field
 
 
-class DnsServer(Document):
+class DnsServerRecord(Document):
     """Beanie Document representing a DNS server stored in MongoDB."""
 
     name: str = Field(..., description="DNS server display name")
@@ -20,7 +20,7 @@ class DnsServer(Document):
     )
 
     class Settings:
-        name = "dns_servers"
+        name = "dns_server_records"  # MongoDB collection name
 
     class Config:
         json_schema_extra = {
@@ -35,4 +35,4 @@ class DnsServer(Document):
         }
 
 
-__all__ = ["DnsServer"]
+__all__ = ["DnsServerRecord"]
