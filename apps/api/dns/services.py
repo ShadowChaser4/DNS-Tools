@@ -1,3 +1,4 @@
+import asyncio
 import dns.asyncresolver
 
 from .models import DnsServerRecord
@@ -30,6 +31,9 @@ class DnsResolverService:
             answers = await resolver.resolve(domain, record_type)
             return [str(answer) for answer in answers]
         except dns.asyncresolver.NXDOMAIN:
+            print(
+                f"No {record_type} records found for {domain} using {dns_server.name}"
+            )
             return []
         except Exception as e:
             print(f"Error occurred while querying DNS records: {e}")
@@ -52,3 +56,21 @@ class DnsResolverService:
         """
 
         all_dns_servers = await self.repo.find_all()
+        results = []
+        # build coroutine list (don't await here) and then gather
+        actions = [
+            self._query_records(domain, record_type, dns_server)
+            for dns_server in all_dns_servers
+        ]
+
+        for dns_server, records in zip(all_dns_servers, await asyncio.gather(*actions)):
+            results.append(
+                SingleDnsLookupResponse(
+                    dns_resolver_name=dns_server.name,
+                    dns_resolver_ip=dns_server.ips[0] if dns_server.ips else "N/A",
+                    domain=domain,
+                    record_type=record_type,
+                    records=records,
+                )
+            )
+        return results

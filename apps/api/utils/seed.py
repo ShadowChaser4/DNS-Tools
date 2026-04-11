@@ -2,7 +2,7 @@ from itertools import count
 
 
 from ..core import initialize_odm
-from ..dns.models import DnsServer
+from ..dns.models import DnsServerRecord
 
 DNS_SEVERS = [
     {
@@ -28,6 +28,7 @@ DNS_SEVERS = [
     },
 ]
 
+
 async def seed_data(app) -> None:
     """Seed the database with initial data.
 
@@ -38,6 +39,6 @@ async def seed_data(app) -> None:
         raise RuntimeError("MongoDB is not connected on app.state.mongo_db")
 
     await initialize_odm(db)
-    if await DnsServer.count() == 0:
-        docs = [DnsServer(**data) for data in DNS_SEVERS]
-        await DnsServer.insert_many(docs)
+    if await DnsServerRecord.count() == 0:
+        docs = [DnsServerRecord(**data) for data in DNS_SEVERS]
+        await DnsServerRecord.insert_many(docs)

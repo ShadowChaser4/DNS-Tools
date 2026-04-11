@@ -1,5 +1,5 @@
-from .models import DnsServer
+from .models import DnsServerRecord
 
-docs = [DnsServer]
+docs = [DnsServerRecord]
 
 __all__ = ["docs"]
