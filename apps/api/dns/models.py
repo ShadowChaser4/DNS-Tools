@@ -1,7 +1,13 @@
-from typing import List, Optional
+from operator import index
+from typing import List, Literal, Optional
 
 from beanie import Document
-from pydantic import Field
+from pydantic import BaseModel, Field
+
+
+class GeoPoint(BaseModel):
+    type: Literal["Point"] = "Point"
+    coordinates: List[float]  # [longitude, latitude]
 
 
 class DnsServerRecord(Document):
@@ -13,8 +19,9 @@ class DnsServerRecord(Document):
     )
     country: Optional[str] = Field(None, description="Country code (e.g. 'US')")
     city: Optional[str] = Field(None, description="City name")
-    lat: Optional[float] = Field(None, ge=-90, le=90, description="Latitude")
-    lon: Optional[float] = Field(None, ge=-180, le=180, description="Longitude")
+    location: Optional[GeoPoint] = Field(
+        None, description="Geographic location of the DNS server"
+    )
     reputation: Optional[float] = Field(
         None, ge=0, le=100, description="Reputation 0-100"
     )
@@ -24,6 +31,10 @@ class DnsServerRecord(Document):
 
     class Settings:
         name = "dns_server_records"  # MongoDB collection name
+        indexes = [
+            [("location", "2dsphere")],  # Geospatial index for location-based queries
+            "name",  # Index on name for faster lookups
+        ]
 
     class Config:
         json_schema_extra = {
@@ -33,8 +44,7 @@ class DnsServerRecord(Document):
                 "ips": ["1.1.1.1", "1.0.0.1"],
                 "country": "USA",
                 "city": "San Francisco",
-                "lat": 37.7749,
-                "lon": -122.4194,
+                "location": {"type": "Point", "coordinates": [-122.4194, 37.7749]},
                 "reputation": 98.5,
                 "reliability": 99.9,
             }

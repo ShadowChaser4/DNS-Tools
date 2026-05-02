@@ -1,6 +1,3 @@
-from itertools import count
-
-
 from ..core import initialize_odm
 from ..dns.models import DnsServerRecord
 
@@ -12,8 +9,7 @@ DNS_SEVERS = [
         "city": "San Francisco",
         "reputation": 98.5,
         "reliability": 99.9,
-        "lat": 37.7749,
-        "lon": -122.4194,
+        "location": {"type": "Point", "coordinates": [-122.4194, 37.7749]},
     },
     {
         "name": "Google Public DNS",
@@ -22,8 +18,7 @@ DNS_SEVERS = [
         "city": "Mountain View",
         "reputation": 97.0,
         "reliability": 99.8,
-        "lat": 37.3861,
-        "lon": -122.0839,
+        "location": {"type": "Point", "coordinates": [-122.0839, 37.3861]},
     },
     {
         "name": "OpenDNS",
@@ -32,8 +27,16 @@ DNS_SEVERS = [
         "city": "Austin",
         "reputation": 95.0,
         "reliability": 99.7,
-        "lat": 30.2672,
-        "lon": -97.7431,
+        "location": {"type": "Point", "coordinates": [-97.7431, 30.2672]},
+    },
+    {
+        "name": "Md Masud Rana Roni t/a RV Cyber World",
+        "ips": ["103.157.237.34"],
+        "country": "Bangladesh",
+        "city": "Dhaka",
+        "reputation": 85.0,
+        "reliability": 72.0,
+        "location": {"type": "Point", "coordinates": [90.4125, 23.8103]},
     },
 ]
 

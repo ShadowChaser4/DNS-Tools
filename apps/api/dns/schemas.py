@@ -18,6 +18,7 @@ class SingleDnsLookupResponse(BaseModel):
     records: list[str] | None
     dns_resolver_ip: str
     dns_resolver_name: str | None
+    location: list[float] | None
 
     class Config:
         json_schema_extra = {
@@ -25,6 +26,7 @@ class SingleDnsLookupResponse(BaseModel):
                 "domain": "example.com",
                 "record_type": "A",
                 "records": ["1.1.1.1", "1.0.0.1"],
+                "location": [-122.0839, 37.3861],
             }
         }
 
