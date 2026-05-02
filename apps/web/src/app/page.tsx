@@ -1,6 +1,17 @@
 import WorldMap from "@/app/_components/world-map";
+import { fetchDnsServers, keys } from "@/lib/api/dns";
+import { makeQueryClient } from "@/lib/react-query-client";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
-export default function Home() {
+export default async function Home() {
+  const queryClient = makeQueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: keys.fetchDnsServers(),
+    queryFn: fetchDnsServers,
+  });
+
+  const dehydratedState = dehydrate(queryClient);
+
   return (
     <main className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
@@ -13,7 +24,9 @@ export default function Home() {
           </section>
 
           <aside className="w-full md:w-[80%] mt-8 md:mt-0">
-            <WorldMap />
+            <HydrationBoundary state={dehydratedState}>
+              <WorldMap />
+            </HydrationBoundary>
           </aside>
         </div>
       </div>

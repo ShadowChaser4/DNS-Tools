@@ -1,0 +1,330 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DNS Tools API",
+    "description": "A simple API for performing DNS lookups and related operations.",
+    "version": "0.0.1"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["Root"],
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RootResponseModel" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RootResponseModel" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dns/servers": {
+      "get": {
+        "tags": ["DNS"],
+        "summary": "List Dns Servers",
+        "description": "Retrieve a list of available DNS servers.",
+        "operationId": "list_dns_servers_dns_servers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/DnsServer" },
+                  "type": "array",
+                  "title": "Response List Dns Servers Dns Servers Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dns/lookup/{domain}": {
+      "get": {
+        "tags": ["DNS"],
+        "summary": "Dns Lookup",
+        "description": "Perform a DNS lookup for a given domain against a specified record type and multiple DNS servers.",
+        "operationId": "dns_lookup_dns_lookup__domain__get",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Domain" }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DnsLookupType",
+              "default": "A"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DnsLookupResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dns/lookup/by-location/{domain}": {
+      "get": {
+        "tags": ["DNS"],
+        "summary": "Deep Dns Lookup",
+        "description": "Perform a DNS lookup for a given domain against a single DNS server, resolving all record types and following CNAME chains as necessary.",
+        "operationId": "deep_dns_lookup_dns_lookup_by_location__domain__get",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Domain" }
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "title": "Lat" }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "title": "Lon" }
+          },
+          {
+            "name": "radius",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMaximum": 10000,
+              "exclusiveMinimum": 0,
+              "title": "Radius"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DnsMultipleRecordsLookupResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DnsLookupResponse": {
+        "properties": {
+          "records": {
+            "items": { "$ref": "#/components/schemas/SingleDnsLookupResponse" },
+            "type": "array",
+            "title": "Records"
+          }
+        },
+        "type": "object",
+        "required": ["records"],
+        "title": "DnsLookupResponse"
+      },
+      "DnsLookupType": {
+        "type": "string",
+        "enum": ["A", "AAAA", "CNAME", "MX", "NS", "TXT"],
+        "title": "DnsLookupType"
+      },
+      "DnsMultipleRecordsLookupResponse": {
+        "properties": {
+          "domain": { "type": "string", "title": "Domain" },
+          "records": {
+            "items": { "$ref": "#/components/schemas/SingleDnsLookupResponse" },
+            "type": "array",
+            "title": "Records"
+          },
+          "server": { "$ref": "#/components/schemas/DnsServer" }
+        },
+        "type": "object",
+        "required": ["domain", "records", "server"],
+        "title": "DnsMultipleRecordsLookupResponse"
+      },
+      "DnsServer": {
+        "properties": {
+          "name": { "type": "string", "title": "Name" },
+          "ips": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Ips"
+          },
+          "location": { "$ref": "#/components/schemas/GeoPoint" },
+          "reputation": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Reputation"
+          },
+          "reliability": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Reliability"
+          },
+          "city": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "City"
+          },
+          "country": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Country"
+          }
+        },
+        "type": "object",
+        "required": ["name", "ips", "location", "reputation", "reliability"],
+        "title": "DnsServer",
+        "example": {
+          "city": "San Francisco",
+          "country": "USA",
+          "ips": ["1.1.1.1", "1.0.0.1"],
+          "location": { "coordinates": [-122.4194, 37.7749], "type": "Point" },
+          "name": "Cloudflare DNS",
+          "reliability": 99.9,
+          "reputation": 98.5
+        }
+      },
+      "GeoPoint": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "Point",
+            "title": "Type",
+            "default": "Point"
+          },
+          "coordinates": {
+            "items": { "type": "number" },
+            "type": "array",
+            "title": "Coordinates"
+          }
+        },
+        "type": "object",
+        "required": ["coordinates"],
+        "title": "GeoPoint"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "RootResponseModel": {
+        "properties": { "message": { "type": "string", "title": "Message" } },
+        "type": "object",
+        "required": ["message"],
+        "title": "RootResponseModel"
+      },
+      "SingleDnsLookupResponse": {
+        "properties": {
+          "domain": { "type": "string", "title": "Domain" },
+          "record_type": { "type": "string", "title": "Record Type" },
+          "records": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Records"
+          },
+          "server": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/DnsServer" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": ["domain", "record_type", "records"],
+        "title": "SingleDnsLookupResponse",
+        "example": {
+          "domain": "example.com",
+          "record_type": "A",
+          "records": ["1.1.1.1", "1.0.0.1"],
+          "server": {
+            "ips": ["1.1.1.1", "1.0.0.1"],
+            "location": {
+              "coordinates": [-122.0839, 37.3861],
+              "type": "Point"
+            },
+            "name": "example.com",
+            "reliability": 0.8,
+            "reputation": 0.9
+          }
+        }
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" },
+          "input": { "title": "Input" },
+          "ctx": { "type": "object", "title": "Context" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
