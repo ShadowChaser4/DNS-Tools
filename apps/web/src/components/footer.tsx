@@ -18,7 +18,7 @@ const Footer = () => {
         </p>
       </div>
       <div className="w-full flex items-center justify-end">
-        <p className="text-sm">
+        <p className="text-xs">
           Made with ❤️ by{" "}
           <a
             href="https://github.com/ShadowChaser4"
