@@ -1,2 +1,3 @@
-venv/
+.venv/
 roadmap/
+*.egg-info/
