@@ -1,0 +1,19 @@
+[project]
+name = "dns-models"
+version = "0.1.0"
+description = "Shared DNS models (Beanie/Pydantic) for use across services"
+readme = "README.md"
+authors = [ { name = "Kushal Acharya" } ]
+requires-python = ">=3.14"
+
+dependencies = [
+    "pydantic>=1.10",
+    "beanie>=1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
