@@ -21,8 +21,8 @@ class DnsServerRecord(Document):
     location: Optional[GeoPoint] = Field(
         None, description="Geographic location of the DNS server"
     )
-    reputation: Optional[float] = Field(
-        None, ge=0, le=100, description="Reputation 0-100"
+    dnssec: Optional[bool] = Field(
+        None, description="Whether the DNS server supports DNSSEC"
     )
     reliability: Optional[float] = Field(
         None, ge=0, le=100, description="Reliability 0-100"
@@ -44,8 +44,7 @@ class DnsServerRecord(Document):
                 "country": "USA",
                 "city": "San Francisco",
                 "location": {"type": "Point", "coordinates": [-122.4194, 37.7749]},
-                "reputation": 98.5,
-                "reliability": 99.9,
+                "dnssec": True,
             }
         }
 

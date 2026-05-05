@@ -1,3 +1,3 @@
 
 [tool.uv.workspace]
-members = ["apps/api", "libs/models"]
+members = ["apps/api", "apps/cron", "libs/models"]

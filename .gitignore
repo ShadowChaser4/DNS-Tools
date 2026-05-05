@@ -1,3 +1,8 @@
 .venv/
 roadmap/
 *.egg-info/
+.env
+_
+.DS_Store
+.idea/
+.vscode/    
