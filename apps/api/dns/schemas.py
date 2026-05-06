@@ -18,7 +18,6 @@ class DnsServer(BaseModel):
     name: str
     ips: list[str]
     location: GeoPoint
-    reputation: float | None
     reliability: float | None
     city: Optional[str] = None
     country: Optional[str] = None
@@ -29,7 +28,6 @@ class DnsServer(BaseModel):
                 "name": "Cloudflare DNS",
                 "ips": ["1.1.1.1", "1.0.0.1"],
                 "location": {"type": "Point", "coordinates": [-122.4194, 37.7749]},
-                "reputation": 98.5,
                 "reliability": 99.9,
                 "city": "San Francisco",
                 "country": "USA",
@@ -53,7 +51,6 @@ class SingleDnsLookupResponse(BaseModel):
                     "name": "example.com",
                     "ips": ["1.1.1.1", "1.0.0.1"],
                     "location": {"type": "Point", "coordinates": [-122.0839, 37.3861]},
-                    "reputation": 0.9,
                     "reliability": 0.8,
                 },
             }

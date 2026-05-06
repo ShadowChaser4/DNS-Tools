@@ -1,0 +1,16 @@
+[project]
+name = "dns-cron"
+version = "0.1.0"
+requires-python = "~=3.14.3"
+dependencies = [
+    "beanie",
+    "pymongo",
+    "pydantic",
+    "pydantic-settings",
+    "python-dotenv",
+    "httpx",
+    "redis>=7.4.0",
+]
+
+[tool.uv.sources]
+dns-models = { workspace = true } 
