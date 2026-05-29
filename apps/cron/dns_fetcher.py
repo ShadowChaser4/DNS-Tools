@@ -1,6 +1,6 @@
 import sys
 import pathlib
-from dns_models import DnsServerRecord
+from dns_models import DnsServerRecord, GeoPoint
 from datetime import datetime, timezone
 from beanie.odm.operators.update.general import Set
 
@@ -178,25 +178,75 @@ async def save_to_mongodb(dns_servers: dict[str, list[dict]]) -> None:
     await close_mongo()
 
 
+async def update_location():
+    """Update location for all DNS servers that are missing it."""
+    from beanie import init_beanie
+    from apps.cron.utils.db import connect_to_mongo, close_mongo, MONGODB_DB
+    from helper.location_helper import get_lat_long_from_city_country
+
+    client = await connect_to_mongo()
+    await init_beanie(database=client[MONGODB_DB], document_models=[DnsServerRecord])
+
+    # Find all records missing location
+    pairs = await DnsServerRecord.aggregate(
+        [
+            {
+                "$group": {
+                    "_id": {
+                        "city": "$city",
+                        "country": "$country",
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "_id": 0,
+                    "city": "$_id.city",
+                    "country": "$_id.country",
+                }
+            },
+        ]
+    ).to_list()
+    print(
+        f"Found {len(pairs)} unique city-country pairs to update location for",
+        pairs[:5],
+    )
+    for pair in pairs:
+        city = pair.get("city")
+        country = pair.get("country")
+        if not city and not country:
+            continue
+        location = await get_lat_long_from_city_country(city, country)
+        if location:
+            print(f"Updating location for {city}, {country} to {location}")
+            geo_point = GeoPoint(coordinates=[location[1], location[0]])
+            await DnsServerRecord.find(
+                DnsServerRecord.city == city,
+                DnsServerRecord.country == country,
+            ).update(Set({"location": geo_point}))
+    await close_mongo()
+
+
 async def main():
-    csv_data = await get_dns_servers_csv()
-    dns_servers = await parse_csv_to_dicts(csv_data)
+    # csv_data = await get_dns_servers_csv()
+    # dns_servers = await parse_csv_to_dicts(csv_data)
 
-    print(f"Fetched {len(dns_servers)} DNS servers", dns_servers[:0])
-    dns_map: dict[str, list[dict]] = {}
-    for server in dns_servers:
-        asn = server.get("as_number")
-        name = server.get("name")
-        as_org = server.get("as_org")
-        key = f"{asn} {name} {as_org}"
-        if key in dns_map:
-            dns_map[key].append(server)
-        else:
-            dns_map[key] = [server]
+    # print(f"Fetched {len(dns_servers)} DNS servers", dns_servers[:0])
+    # dns_map: dict[str, list[dict]] = {}
+    # for server in dns_servers:
+    #     asn = server.get("as_number")
+    #     name = server.get("name")
+    #     as_org = server.get("as_org")
+    #     key = f"{asn} {name} {as_org}"
+    #     if key in dns_map:
+    #         dns_map[key].append(server)
+    #     else:
+    #         dns_map[key] = [server]
 
-    await save_to_mongodb(dns_map)
+    # await save_to_mongodb(dns_map)
 
-    print(f"Parsed {len(dns_map)} DNS servers into map", list(dns_map.items())[:5])
+    # print(f"Parsed {len(dns_map)} DNS servers into map", list(dns_map.items())[:5])
+    await update_location()
 
 
 if __name__ == "__main__":

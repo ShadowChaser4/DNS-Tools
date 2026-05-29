@@ -71,7 +71,7 @@ class DnsServerRepository:
             ).to_list(length=None)
 
             if order_by_reputation:
-                nearby_servers.sort(key=lambda x: x.reputation or 0, reverse=True)
+                nearby_servers.sort(key=lambda x: x.reliability or 0, reverse=True)
 
             # Apply limit and offset for pagination
             if limit is not None:

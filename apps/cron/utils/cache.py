@@ -39,8 +39,20 @@ class Cache:
 
         self.client = get_redis_client()
 
-    def set(self, key: str, value: str, expire_seconds: int = 3600) -> None:
-        self.client.setex(key, expire_seconds, value)
+    def set(self, key: str, value: str, expire_seconds: int = 3600, ex: int | None = None, nx: bool = False) -> bool | None:
+        """Set a key in Redis.
+
+        Compatible with redis-py's `set` parameters used by callers here:
+        - `ex`: expire seconds
+        - `nx`: set only if not exists
+
+        Backwards-compatible `expire_seconds` is still supported and used when
+        `ex` is not provided.
+        Returns the underlying redis client result (True on success when `nx` used).
+        """
+        if ex is None:
+            ex = expire_seconds
+        return self.client.set(key, value, ex=ex, nx=nx)
 
     def get(self, key: str) -> str | None:
         return self.client.get(key)

@@ -17,7 +17,7 @@ class DnsLookupType(str, Enum):
 class DnsServer(BaseModel):
     name: str
     ips: list[str]
-    location: GeoPoint
+    location: Optional[GeoPoint]
     reliability: float | None
     city: Optional[str] = None
     country: Optional[str] = None
