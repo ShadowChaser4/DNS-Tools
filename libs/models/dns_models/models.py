@@ -45,6 +45,9 @@ class DnsServerRecord(Document):
         description="Time of last seen",
     )
     identifier: str = Field(..., description="Unique identifier for the DNS server")
+    active: bool = Field(
+        default=True, description="Whether the DNS server is currently active"
+    )
 
     class Settings:
         name = "dns_server_records"  # MongoDB collection name
@@ -69,6 +72,7 @@ class DnsServerRecord(Document):
                 "updated_at": "2024-09-01T12:00:00Z",
                 "last_seen": "2024-09-01T12:00:00Z",
                 "organization": "Cloudflare, Inc.",
+                "active": True,
             }
         }
 

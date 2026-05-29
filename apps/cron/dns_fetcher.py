@@ -1,8 +1,8 @@
-import re
 import sys
 import pathlib
 from dns_models import DnsServerRecord
 from datetime import datetime, timezone
+from beanie.odm.operators.update.general import Set
 
 import httpx
 
@@ -72,11 +72,10 @@ def is_datetime(s: str) -> bool:
         return False
 
 
-async def save_single_record_to_mongodb(
+async def parse_to_db_model(
     server_list: list[dict], identifier: str
-) -> None:
+) -> DnsServerRecord | None:
     try:
-        from beanie.odm.operators.update.general import Set
 
         first_record = server_list[0]
         all_ips = list(
@@ -107,24 +106,7 @@ async def save_single_record_to_mongodb(
             ),
         )
 
-        await DnsServerRecord.find_one(DnsServerRecord.identifier == identifier).upsert(
-            Set(
-                {
-                    DnsServerRecord.name: record.name,
-                    DnsServerRecord.ips: record.ips,
-                    DnsServerRecord.country: record.country,
-                    DnsServerRecord.city: record.city,
-                    DnsServerRecord.as_number: record.as_number,
-                    DnsServerRecord.organization: record.organization,
-                    DnsServerRecord.reliability: record.reliability,
-                    DnsServerRecord.dnssec: record.dnssec,
-                    DnsServerRecord.last_seen: record.last_seen,
-                    DnsServerRecord.updated_at: datetime.now(timezone.utc),
-                    DnsServerRecord.location: None,  # Geolocation can be added later based on IP
-                }
-            ),
-            on_insert=record,
-        )
+        return record
     except Exception as e:
         print(f"Error saving record {identifier}, {server_list}: {e}")
 
@@ -144,6 +126,32 @@ def build_batches(items, batch_size: int):
         yield batch
 
 
+async def _process_batch(batch):
+    model_pairs: list[tuple[str, DnsServerRecord]] = []
+    for identifier, server_list in batch:
+        model = await parse_to_db_model(server_list, identifier)
+        if model:
+            model_pairs.append((identifier, model))
+    if not model_pairs:
+        return
+    print(f"Processing batch of {len(model_pairs)} records", model_pairs[0][1])
+    async with DnsServerRecord.bulk_writer(ordered=False) as writer:
+        for identifier, model in model_pairs:
+            await DnsServerRecord.find_one(
+                DnsServerRecord.identifier == identifier, bulk_writer=writer
+            ).upsert(
+                Set(
+                    {
+                        **model.model_dump(
+                            exclude={"id", "created_at"}, exclude_none=True
+                        ),
+                        "last_seen": datetime.now(timezone.utc),
+                    }
+                ),
+                on_insert=model,
+            )
+
+
 async def save_to_mongodb(dns_servers: dict[str, list[dict]]) -> None:
     """Save the list of DNS servers to MongoDB using Beanie."""
 
@@ -153,14 +161,20 @@ async def save_to_mongodb(dns_servers: dict[str, list[dict]]) -> None:
     client = await connect_to_mongo()
     await init_beanie(database=client[MONGODB_DB], document_models=[DnsServerRecord])
 
-    batch_size = 100
+    batch_size = 2000
     # Stream batches from the dict items iterator so we don't allocate a large list
     batches = build_batches(dns_servers.items(), batch_size)
     for batch in batches:
-        tasks = []
-        for identifier, server_list in batch:
-            tasks.append(save_single_record_to_mongodb(server_list, identifier))
-        await asyncio.gather(*tasks)
+        await _process_batch(batch)
+
+    # For all records that were not last seen today, set active=False
+    today = datetime.now(timezone.utc).date()
+    await DnsServerRecord.update_many(
+        DnsServerRecord.last_seen
+        < datetime(today.year, today.month, today.day, tzinfo=timezone.utc),
+        Set({"active": False}),
+    )
+
     await close_mongo()
 
 
@@ -170,7 +184,6 @@ async def main():
 
     print(f"Fetched {len(dns_servers)} DNS servers", dns_servers[:0])
     dns_map: dict[str, list[dict]] = {}
-    duplicates = 0
     for server in dns_servers:
         asn = server.get("as_number")
         name = server.get("name")
@@ -178,14 +191,12 @@ async def main():
         key = f"{asn} {name} {as_org}"
         if key in dns_map:
             dns_map[key].append(server)
-            duplicates += 1
         else:
             dns_map[key] = [server]
 
     await save_to_mongodb(dns_map)
 
     print(f"Parsed {len(dns_map)} DNS servers into map", list(dns_map.items())[:5])
-    print(f"Found {duplicates} duplicate entries")
 
 
 if __name__ == "__main__":
