@@ -12,6 +12,7 @@ dependencies = [
     "python-dotenv",
     "sentry-sdk",
     "httpx",
+    "dns-models",
 ]
 
 [tool.uv.sources]

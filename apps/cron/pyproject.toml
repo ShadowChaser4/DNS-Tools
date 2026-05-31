@@ -10,6 +10,7 @@ dependencies = [
     "python-dotenv",
     "httpx",
     "redis>=7.4.0",
+    "dns-models",
 ]
 
 [tool.uv.sources]

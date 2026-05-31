@@ -91,6 +91,7 @@ version = "0.1.0"
 source = { virtual = "apps/api" }
 dependencies = [
     { name = "beanie" },
+    { name = "dns-models" },
     { name = "fastapi", extra = ["standard"] },
     { name = "httpx" },
     { name = "pydantic" },
@@ -104,6 +105,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "beanie" },
+    { name = "dns-models", editable = "libs/models" },
     { name = "fastapi", extras = ["standard"] },
     { name = "httpx" },
     { name = "pydantic" },
@@ -120,6 +122,7 @@ version = "0.1.0"
 source = { virtual = "apps/cron" }
 dependencies = [
     { name = "beanie" },
+    { name = "dns-models" },
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -131,6 +134,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "beanie" },
+    { name = "dns-models", editable = "libs/models" },
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-settings" },

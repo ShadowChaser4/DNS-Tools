@@ -107,7 +107,9 @@ class DnsResolverService:
             for dns_server in all_dns_servers
         ]
 
-        for dns_server, records in zip(all_dns_servers, await asyncio.gather(*actions)):
+        for dns_server, records in zip(
+            all_dns_servers, await asyncio.gather(*actions, return_exceptions=True)
+        ):
             results.append(
                 SingleDnsLookupResponse(
                     domain=domain,
