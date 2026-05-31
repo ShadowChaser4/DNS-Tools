@@ -1,4 +1,12 @@
 .venv/
 roadmap/
 *.egg-info/
-*.env
+.env
+_
+.DS_Store
+.idea/
+.vscode/    
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
