@@ -90,6 +90,7 @@ version = "0.1.0"
 source = { virtual = "apps/api" }
 dependencies = [
     { name = "beanie" },
+    { name = "dns-models" },
     { name = "fastapi", extra = ["standard"] },
     { name = "httpx" },
     { name = "pydantic" },
@@ -103,6 +104,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "beanie" },
+    { name = "dns-models", editable = "libs/models" },
     { name = "fastapi", extras = ["standard"] },
     { name = "httpx" },
     { name = "pydantic" },
@@ -111,6 +113,33 @@ requires-dist = [
     { name = "python-dotenv" },
     { name = "sentry-sdk" },
     { name = "uvicorn" },
+]
+
+[[package]]
+name = "dns-cron"
+version = "0.1.0"
+source = { virtual = "apps/cron" }
+dependencies = [
+    { name = "beanie" },
+    { name = "dns-models" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pymongo" },
+    { name = "python-dotenv" },
+    { name = "redis" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "beanie" },
+    { name = "dns-models", editable = "libs/models" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pymongo" },
+    { name = "python-dotenv" },
+    { name = "redis", specifier = ">=7.4.0" },
 ]
 
 [[package]]

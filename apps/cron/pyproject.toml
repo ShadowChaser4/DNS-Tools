@@ -1,17 +1,15 @@
 [project]
-name = "dns-api"
+name = "dns-cron"
 version = "0.1.0"
 requires-python = "~=3.14.3"
 dependencies = [
-    "fastapi[standard]",
-    "uvicorn",
     "beanie",
     "pymongo",
     "pydantic",
     "pydantic-settings",
     "python-dotenv",
-    "sentry-sdk",
     "httpx",
+    "redis>=7.4.0",
     "dns-models",
 ]
 
