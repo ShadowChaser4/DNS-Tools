@@ -1,4 +1,5 @@
 import asyncio
+from socket import timeout
 import dns.asyncresolver
 
 from .models import DnsServerRecord
@@ -159,65 +160,13 @@ class DnsResolverService:
                     domain=domain,
                     record_type=record_type,
                     records=records,
-                    location=(
-                        dns_server.location.coordinates if dns_server.location else None
-                    ),
-                )
-            )
-        return results
-
-    async def resolve_all_dns_records(
-        self, domain: str, lat: float, long: float, radius: int
-    ) -> list[SingleDnsLookupResponse]:
-        """
-        Resolve all DNS records for a given domain, without following CNAME chains.
-
-        Args:
-            domain (str): The domain to resolve.
-            lat (float): Latitude for geolocation-based DNS server selection.
-            long (float): Longitude for geolocation-based DNS server selection.
-            radius (int): Radius in kilometers to search for nearby DNS servers.
-        Returns:
-            list[SingleDnsLookupResponse]: A list of DNS lookup responses containing the resolved records.
-        """
-
-        # first find nearby DNS servers based on lat/long/radius
-        nearby_dns_servers = await self.repo.find_nearby(
-            lat=lat, lon=long, radius_km=radius, order_by_reputation=True, limit=1
-        )
-        if not nearby_dns_servers:
-            print("No nearby DNS servers found within the specified radius.")
-            return []
-
-        # For simplicity, we'll just use the first nearby DNS server found
-        dns_server = nearby_dns_servers[0]
-
-        # List types of DNS records to query
-        record_types = ["A", "AAAA", "CNAME", "MX", "TXT", "NS"]
-        results = []
-        actions = [
-            self._query_records(domain, record_type, dns_server)
-            for record_type in record_types
-        ]
-        for record_type, records in zip(record_types, await asyncio.gather(*actions)):
-            results.append(
-                SingleDnsLookupResponse(
-                    dns_resolver_name=dns_server.name,
-                    dns_resolver_ip=(
-                        ", ".join(dns_server.ips) if dns_server.ips else "N/A"
-                    ),
-                    domain=domain,
-                    record_type=record_type,
-                    records=records,
-                    location=(
-                        dns_server.location.coordinates if dns_server.location else None
-                    ),
+                    server=DnsServer(**dns_server.model_dump()) if dns_server else None,
                 )
             )
         return DnsMultipleRecordsLookupResponse(
             domain=domain,
             records=results,
-            server=DnsServer(**dns_server.model_dump()),
+            server=DnsServer(**dns_server.model_dump()) if dns_server else None,
         )
 
     async def get_available_dns_servers(self) -> list[DnsServer]:
