@@ -10,6 +10,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+)
 
 
 async def get_dns_servers_csv() -> str:
@@ -195,5 +198,8 @@ async def fetch_dns_servers():
 
 if __name__ == "__main__":
     import asyncio
-
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+    )
     asyncio.run(fetch_dns_servers())
