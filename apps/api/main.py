@@ -1,25 +1,22 @@
-from typing import AsyncGenerator
-
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
-from pymongo import AsyncMongoClient
-
-
-from .core import connect_to_mongo, close_mongo, initialize_odm, get_db
+from .core import connect_to_mongo, close_mongo, initialize_odm
 from .dns.router import router as dns_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: connect to and close shared resources."""
-    await connect_to_mongo(app)
+    client = await connect_to_mongo()
+    app.state.mongo_db = client
     await initialize_odm(app.state.mongo_db)
     try:
         yield
     finally:
-        await close_mongo(app)
+        await close_mongo()
+        app.state.mongo_db = None
 
 
 app = FastAPI(
@@ -42,11 +39,10 @@ async def root() -> RootResponseModel:
 
 
 @app.get("/health", response_model=RootResponseModel, tags=["Health"])
-async def health(
-    db: AsyncGenerator[AsyncMongoClient | None] = Depends(get_db),
-) -> RootResponseModel:
+async def health(request: Request) -> RootResponseModel:
     try:
-        await db.command("ping")  # Check MongoDB connection
+        app = request.app
+        await app.state.mongo_db.command("ping")  # Check MongoDB connection
         return RootResponseModel(message="API is running smoothly.")
     except Exception as e:
         print(f"Health check failed: {e}", e)

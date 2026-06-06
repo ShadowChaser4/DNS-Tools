@@ -9,19 +9,18 @@ and runs its `seed_data` coroutine.
 """
 
 import asyncio
-from fastapi import FastAPI
 
 from apps.api.utils import seed
 from apps.api.core import connect_to_mongo, close_mongo
 
 
 async def main_async() -> None:
-    app = FastAPI()
-    await connect_to_mongo(app)
+    await connect_to_mongo()
     try:
-        await seed.seed_data(app)
+        await seed.seed_data()
     finally:
-        await close_mongo(app)
+        await close_mongo()
+
 
 
 def main() -> None:

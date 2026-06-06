@@ -33,7 +33,7 @@ async def read_items(db=Depends(get_db)):
 from __future__ import annotations
 
 import os
-from typing import AsyncGenerator, Optional
+from typing import Optional
 
 from fastapi import FastAPI
 from pymongo import AsyncMongoClient
@@ -50,48 +50,23 @@ MONGODB_DB = os.getenv("MONGODB_DB", "dns_tools")
 _mongo_client: Optional[AsyncMongoClient] = None
 
 
-async def connect_to_mongo(app: FastAPI) -> None:
+async def connect_to_mongo() -> None:
     """Create a shared AsyncMongoClient and store it in the app state."""
     global _mongo_client
     if _mongo_client is None:
         _mongo_client = AsyncMongoClient(MONGODB_URI)
-        app.state.mongo_client = _mongo_client
-        app.state.mongo_db = _mongo_client[MONGODB_DB]
+        return _mongo_client[MONGODB_DB]
+    else:
+        return _mongo_client[MONGODB_DB]
 
 
-async def close_mongo(app: FastAPI) -> None:
+async def close_mongo() -> None:
     """Close the shared AsyncMongoClient on shutdown."""
     global _mongo_client
     if _mongo_client is not None:
         await _mongo_client.close()
         _mongo_client = None
-        app.state.mongo_client = None
-        app.state.mongo_db = None
 
 
-async def get_db() -> AsyncGenerator[AsyncMongoClient, None]:
-    """FastAPI dependency that yields an `AsyncMongoClient`.
 
-    If the shared client was not created (e.g., startup not wired), this
-    creates a short-lived client for the scope of the dependency and closes
-    it afterwards.
-    """
-    if _mongo_client is None:
-        client = AsyncMongoClient(MONGODB_URI)
-        try:
-            yield client[MONGODB_DB]
-        except Exception as e:
-            print(f"Failed to connect to MongoDB: {e}")
-            raise e
-        finally:
-            client.close()
-    else:
-        yield _mongo_client[MONGODB_DB]
-
-
-def get_client() -> Optional[AsyncMongoClient]:
-    """Return the shared motor client (or None if not connected)."""
-    return _mongo_client
-
-
-__all__ = ["connect_to_mongo", "close_mongo", "get_db", "get_client"]
+__all__ = ["connect_to_mongo", "close_mongo",]
