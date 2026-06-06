@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from dotenv import get_key
 import httpx
 import asyncio
 
@@ -26,7 +25,7 @@ class LocationHelper:
         while self.cache.get(cache_key):
             print("Waiting for geocoding lock to be released...")
             await asyncio.sleep(1)
-        await self.cache.set(cache_key, True, expire_seconds=2, nx=True) # Set lock with a short TTL to prevent deadlocks
+        self.cache.set(cache_key, "1", expire_seconds=2, nx=True) # Set lock with a short TTL to prevent deadlocks
 
     async def _call_nota(self, city: str, country: str) -> list[float, float] | None:
         """Call the NOTA API to get the latitude and longitude for a given city and country."""
@@ -36,7 +35,7 @@ class LocationHelper:
             await self._acquire_lock('nominatim')
             
             params = {
-                "q": get_key(city, country),
+                "q": f"{city}, {country}" if city else country,
                 "format": "json",
             }
             headers = {
@@ -109,11 +108,10 @@ class LocationHelper:
         location = await self._check_db(city, country)
         if location:
             latitude, longitude = location.latitude, location.longitude
-            res = [latitude, longitude]
-            self.cache.set(cache_key, res, expire_seconds=60 * 60 * 24)  # Cache for 24 hours
+            self.cache.set(cache_key, f"{latitude},{longitude}", expire_seconds=60 * 60 * 24)  # Cache for 24 hours
             return Coordinates(latitude=latitude, longitude=longitude)
 
-        if len(country) > 0: #If country is provided prefer open-meteo 
+        if len(country) > 0 and city is not None: #If country is provided prefer open-meteo 
             location = await self._call_open_meteo(city, country)
         else:
             location = await self._call_nota(city, country)

@@ -2,9 +2,6 @@ from dns_models import DnsServerRecord
 from datetime import datetime, timezone
 from beanie.odm.operators.update.general import Set
 
-from apps.cron.utils import Cache
-
-
 import httpx
 import logging
 

@@ -54,6 +54,11 @@ async def update_location():
     pairs = await DnsServerRecord.aggregate(
         [
             {
+                "$match": {
+                    "location": {"$in": [None, False, ""]},
+                }
+            },
+            {
                 "$group": {
                     "_id": {
                         "city": "$city",
