@@ -66,7 +66,6 @@ async def deep_dns_lookup(
         raise ValueError("Radius must be greater than 0")
 
     response = await service.resolve_all_dns_records(domain, lat, lon, radius)
-    print("Response", response)
     return response
 
 
