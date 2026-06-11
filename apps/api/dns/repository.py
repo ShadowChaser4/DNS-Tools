@@ -1,4 +1,9 @@
+import asyncio
+import traceback
 from typing import Literal
+import math 
+
+from dns_models.models import GeoPoint
 
 from .models import DnsServerRecord
 
@@ -23,10 +28,14 @@ class DnsServerRepository:
             query = query.sort((order_by, -1 if order_desc else 1))
         return await query.to_list(length=None)
 
-    async def save(self, record: DnsServerRecord) -> None:
+    async def save(self, 
+                   record: DnsServerRecord
+                   ) -> None:
         await self.collection.insert_one(record.model_dump())
 
-    async def find_by_id(self, record_id: str) -> DnsServerRecord | None:
+    async def find_by_id(self, 
+                        record_id: str
+                        ) -> DnsServerRecord | None:
         return await self.collection.find_one({"_id": record_id})
 
     async def find_nearby(
@@ -66,7 +75,9 @@ class DnsServerRepository:
                             },
                             "$maxDistance": radius_meters,
                         }
-                    }
+                    },
+                    "dnssec": True,  # Only include servers that support DNSSEC
+                    "name": {"$regex": "^.{2,}$"},
                 }
             ).to_list(length=None)
 
@@ -82,4 +93,73 @@ class DnsServerRepository:
             return nearby_servers
         except Exception as e:
             print(f"Error occurred while finding nearby DNS servers: {e}")
+            return []
+
+    async def _get_equi_distant_geo_points_over_globe(
+        self, total_count:int,  
+    )->list[GeoPoint]: 
+        """
+        Generate equidistant geo points over the globe using the Fibonacci sphere algorithm.
+
+        Args:
+            total_count (int): The total number of equidistant points to generate.
+
+        Returns:
+            list[GeoPoint]: A list of GeoPoint instances representing the equidistant points.
+        """
+        points = []
+        phi = (1 + 5**0.5) / 2  # Golden ratio
+        for i in range(total_count):
+            y = 1 - (i / float(total_count - 1)) * 2  # y goes from 1 to -1
+            radius = (1 - abs(y)) ** 0.5  # radius at y
+            theta = i * phi  # golden angle increment
+
+            x = math.cos(theta) * radius
+            z = math.sin(theta) * radius
+
+            lat = math.asin(y) * (180 / math.pi)  # Convert to degrees
+            lon = math.atan2(z, x) * (180 / math.pi)  # Convert to degrees
+
+            points.append(GeoPoint(coordinates=[lon, lat]))
+
+        return points
+
+    async def aggregate_by_location(self, total=30) -> list[DnsServerRecord]:
+        """
+        Aggregate DNS servers by location, returning the count of servers in all location.
+        """
+        RADIUS = 2000 * 1000  # 2000 km in meters, adjust as needed for desired granularity
+        try:
+            records = []
+            geo_points = await self._get_equi_distant_geo_points_over_globe(total)
+            for point in geo_points:
+                long, lat = point.coordinates
+                pipeline = [
+                    {
+                        "$geoNear": {
+                            "near": {
+                                "type": "Point",
+                                "coordinates": [long, lat],
+                            },
+                            "distanceField": "distance",
+                            "spherical": True,
+                            "maxDistance": RADIUS,
+                            "query": {"dnssec": True},
+                        }
+                    },
+                    {"$match": {"$expr": {"$gt": [{"$strLenCP": "$name"}, 4]}}},
+                    {"$sort": {"reliability": -1}},
+                    {"$limit": 1},
+                ]
+                record = self.collection.aggregate(pipeline).to_list(length=None)
+                records.append(record)
+            results = []
+            for record in await asyncio.gather(*records):
+                if record:
+                    results.append(DnsServerRecord(**record[0]))
+
+            return results
+        except Exception as e:
+            print("Error occurred while aggregating DNS servers by location")
+            print(traceback.format_exc())
             return []
