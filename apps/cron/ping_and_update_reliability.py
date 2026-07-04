@@ -15,7 +15,7 @@ logger.setLevel(logging.DEBUG)
 IS_WINDOWS = platform.system() == "Windows"
 QUEUE_MAX_SIZE=1_000
 TRUSTED_DOMAINS = ["google.com", "cloudflare.com", "aws.amazon.com", "facebook.com", "microsoft.com"]
-MAX_WORKERS = 10  # Number of concurrent tasks for processing records
+MAX_WORKERS = 250  # Number of concurrent tasks for processing records
 
 def update_reliablity_score(server: DnsServerRecord, no_of_fails:int, no_of_success:int) -> None:
     """Update the reliability score of a DNS server based on the success of a ping."""
