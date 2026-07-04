@@ -76,7 +76,9 @@ class DnsServerRepository:
                             "$maxDistance": radius_meters,
                         }
                     },
-                    "dnssec": True,  # Only include servers that support DNSSEC
+                    "dnssec": True,
+                    "active": True,
+                    "reliability": {"$gte": 1},
                     "name": {"$regex": "^.{2,}$"},
                 }
             ).to_list(length=None)
@@ -128,7 +130,7 @@ class DnsServerRepository:
         """
         Aggregate DNS servers by location, returning the count of servers in all location.
         """
-        RADIUS = 2000 * 1000  # 2000 km in meters, adjust as needed for desired granularity
+        RADIUS = 3000 * 1000  # 3000 km in meters, adjust as needed for desired granularity
         try:
             records = []
             geo_points = await self._get_equi_distant_geo_points_over_globe(total)
@@ -144,7 +146,11 @@ class DnsServerRepository:
                             "distanceField": "distance",
                             "spherical": True,
                             "maxDistance": RADIUS,
-                            "query": {"dnssec": True},
+                            "query": {
+                                "dnssec": True,
+                                "active": True,
+                                "reliability": {"$gte": 1},
+                            },
                         }
                     },
                     {"$match": {"$expr": {"$gt": [{"$strLenCP": "$name"}, 4]}}},

@@ -182,8 +182,7 @@ async def fetch_dns_servers():
     for server in dns_servers:
         asn = server.get("as_number")
         name = server.get("name")
-        as_org = server.get("as_org")
-        key = f"{asn} {name} {as_org}"
+        key = f"{asn}_{name}"
         if key in dns_map:
             dns_map[key].append(server)
         else:
