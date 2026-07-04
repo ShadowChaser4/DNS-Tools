@@ -2,8 +2,6 @@ from dns_models import DnsServerRecord
 from datetime import datetime, timezone
 from beanie.odm.operators.update.general import Set
 
-from apps.cron.utils import Cache
-
 
 import httpx
 import logging
@@ -159,9 +157,9 @@ async def save_to_mongodb(dns_servers: dict[str, list[dict]]) -> None:
     client = await connect_to_mongo()
     await init_beanie(database=client[MONGODB_DB], document_models=[DnsServerRecord])
 
-    BATCH_SIZe = 4000
+    BATCH_SIZE = 4000
     # Stream batches from the dict items iterator so we don't allocate a large list
-    batches = build_batches(dns_servers.items(), BATCH_SIZe)
+    batches = build_batches(dns_servers.items(), BATCH_SIZE)
     for batch in batches:
         await _process_batch(batch)
 
