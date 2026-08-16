@@ -6,7 +6,7 @@ export default function NotFound() {
       <main className="flex min-h-[60vh] flex-col items-center justify-center text-center p-6">
         <h1 className="text-2xl font-bold">Page not found</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          We couldn't find the page you're looking for.
+          We could not find the page you are looking for.
         </p>
         <div className="mt-4">
           <Button asChild>
