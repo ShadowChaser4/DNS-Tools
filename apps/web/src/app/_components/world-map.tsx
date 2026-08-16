@@ -7,13 +7,23 @@ import {
   Geography,
   Marker,
 } from "react-simple-maps";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const GEO_URL =
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
+const emptySubscribe = () => () => {};
+
+const useIsClient = () =>
+  useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+
 const WorldMap = () => {
   const { data, error, isLoading } = useDnsServers();
+  const isClient = useIsClient();
   if (error) {
     console.error("Error fetching DNS servers:", error);
   }
@@ -31,15 +41,9 @@ const WorldMap = () => {
     };
   });
 
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <div className="w-full h-105 md:h-150">
-      {mounted ? (
+      {isClient ? (
         <ComposableMap style={{ width: "100%", height: "100%" }}>
           <Geographies geography={GEO_URL}>
             {({ geographies }) =>

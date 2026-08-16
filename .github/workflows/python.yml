@@ -3,7 +3,7 @@ name: Python (uv)
 on:
   push:
     branches: [main, master]
-    paths:
+    paths: &python-paths
       - "apps/api/**"
       - "apps/cron/**"
       - "libs/models/**"
@@ -12,14 +12,8 @@ on:
       - ".python-version"
       - ".github/workflows/python.yml"
   pull_request:
-    paths:
-      - "apps/api/**"
-      - "apps/cron/**"
-      - "libs/models/**"
-      - "pyproject.toml"
-      - "uv.lock"
-      - ".python-version"
-      - ".github/workflows/python.yml"
+    paths: *python-paths
+  workflow_dispatch:
 
 concurrency:
   group: python-${{ github.workflow }}-${{ github.ref }}
@@ -38,7 +32,7 @@ jobs:
             path: apps/cron/tests
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v5
@@ -51,7 +45,7 @@ jobs:
           python-version-file: .python-version
 
       - name: Sync dependencies
-        run: uv sync --package ${{ matrix.package.name }} --group dev --frozen
+        run: uv sync --all-packages --group dev --frozen
 
       - name: Run tests (${{ matrix.package.name }})
         run: uv run --package ${{ matrix.package.name }} pytest ${{ matrix.package.path }} -q
