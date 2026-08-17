@@ -9,7 +9,7 @@ dependencies = [
     "pydantic-settings",
     "python-dotenv",
     "httpx",
-    "redis>=7.4.0",
+    "redis>=8.1.0",
     "dns-models",
     "dnspython",
 ]
